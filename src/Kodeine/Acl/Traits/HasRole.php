@@ -1,7 +1,6 @@
 <?php namespace Kodeine\Acl\Traits;
 
-
-trait HasRoleImplementation
+trait HasRole
 {
     use HasPermission;
 
@@ -39,7 +38,7 @@ trait HasRoleImplementation
             }
         );
 
-        $slugs = method_exists($this_roles, 'pluck') ? $this_roles->pluck('slug','id') : $this_roles->lists('slug','id');
+        $slugs = $this_roles->lists('slug');
         return is_null($this_roles)
             ? []
             : $this->collectionAsArray($slugs);
@@ -66,7 +65,7 @@ trait HasRoleImplementation
      * @param  string $slug
      * @return bool
      */
-    public function hasRole($slug, $operator = null)
+    public function is($slug, $operator = null)
     {
         $operator = is_null($operator) ? $this->parseOperator($slug) : $operator;
 
@@ -247,7 +246,7 @@ trait HasRoleImplementation
         if ( starts_with($method, 'is') and $method !== 'is' and ! starts_with($method, 'isWith') ) {
             $role = substr($method, 2);
 
-            return $this->hasRole($role);
+            return $this->is($role);
         }
 
         // Handle canDoSomething() methods
@@ -259,20 +258,5 @@ trait HasRoleImplementation
         }
 
         return parent::__call($method, $arguments);
-    }
-}
-
-$laravel = app();
-if (version_compare($laravel::VERSION, '5.3', '<')) {
-    trait HasRole
-    {
-        use HasRoleImplementation {
-            hasRole as is;
-        }
-    }
-} else {
-    trait HasRole
-    {
-        use HasRoleImplementation;
     }
 }
