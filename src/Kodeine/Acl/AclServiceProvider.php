@@ -23,12 +23,10 @@ class AclServiceProvider extends ServiceProvider
         $this->publishMigration();
 
         $laravel = app();
-        if ( starts_with($laravel::VERSION, '5.0') ) {
-            $this->registerBlade5_0();
-        } else if ( starts_with($laravel::VERSION, ['5.1', '5.2']) ) {
-            $this->registerBlade5_1();
+        if (starts_with($laravel::VERSION, '5.0')) {
+            $this->registerBlade50();
         } else {
-            $this->registerBlade5_3();
+            $this->registerBlade51();
         }
     }
 
@@ -40,7 +38,8 @@ class AclServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/acl.php', 'acl'
+            __DIR__ . '/../../config/acl.php',
+            'acl'
         );
     }
 
@@ -64,30 +63,10 @@ class AclServiceProvider extends ServiceProvider
         ], 'migrations');
     }
 
-    protected function registerBlade5_3()
-    {
-        // role
-        Blade::directive('role', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->hasRole({$expression})): ?>";
-        });
-
-        Blade::directive('endrole', function () {
-            return "<?php endif; ?>";
-        });
-
-        // permission
-        Blade::directive('permission', function ($expression) {
-            return "<?php if (Auth::check() && Auth::user()->can({$expression})): ?>";
-        });
-
-        Blade::directive('endpermission', function () {
-            return "<?php endif; ?>";
-        });
-    }
-        /**
+    /**
      * Register Blade Template Extensions for >= L5.1
      */
-    protected function registerBlade5_1()
+    protected function registerBlade51()
     {
         // role
         Blade::directive('role', function ($expression) {
@@ -111,7 +90,7 @@ class AclServiceProvider extends ServiceProvider
     /**
      * Register Blade Template Extensions for <= L5.0
      */
-    protected function registerBlade5_0()
+    protected function registerBlade50()
     {
         $blade = $this->app['view']->getEngineResolver()->resolve('blade')->getCompiler();
         $blade->extend(function ($view, $compiler) {
