@@ -1,5 +1,6 @@
 <?php namespace Kodeine\Acl\Traits;
 
+
 trait HasPermissionInheritance
 {
     protected $cacheInherit;
@@ -21,17 +22,19 @@ trait HasPermissionInheritance
         // then more permissive wins
         $tmp = [];
         $letNtfs = function ($alias, $slug) use (&$tmp) {
-            if (config('acl.most_permissive_wins', false)) {
+            if ( config('acl.most_permissive_wins', false) ) {
                 $ntfs[$alias] = array_diff($slug, [false]);
-                if (sizeof($ntfs) > 0) {
+                if ( sizeof($ntfs) > 0 ) {
                     $tmp = array_replace_recursive($tmp, $ntfs);
                 }
             }
         };
 
         foreach ($permissions as $row) {
+
             // permissions without inherit ids
-            if (is_null($row->inherit_id) || ! $row->inherit_id) {
+            if ( is_null($row->inherit_id) || ! $row->inherit_id ) {
+
                 // ntfs determination
                 $letNtfs($row->name, $row->slug);
 
@@ -42,9 +45,10 @@ trait HasPermissionInheritance
 
             // process inherit_id recursively
             $inherited = $this->getRecursiveInherit($row->inherit_id, $row->slug);
-            $merge = $permissions->where('name', $row->name)->lists('slug', 'name');
+            $merge = $permissions->where('name', $row->name);
+            $merge = method_exists($merge, 'pluck') ? $merge->pluck('slug', 'name') : $merge->lists('slug', 'name');
 
-            // fix for l5.1 and backward compatibility.
+                // fix for l5.1 and backward compatibility.
             // lists() method should return as an array.
             $merge = $this->collectionAsArray($merge);
 
@@ -54,9 +58,9 @@ trait HasPermissionInheritance
             // make sure we don't unset if
             // inherited & slave permission
             // have same names
-            if (key($inherited) != $row->name) {
+            if ( key($inherited) != $row->name )
                 unset($rights[$row->name]);
-            }
+
         }
 
         return $rights;
@@ -78,9 +82,9 @@ trait HasPermissionInheritance
         // then more permissive wins
         $tmp = [];
         $letNtfs = function ($slug) use (&$tmp) {
-            if (config('acl.most_permissive_wins', false)) {
+            if ( config('acl.most_permissive_wins', false) ) {
                 $ntfs = array_diff($slug, [false]);
-                if (sizeof($ntfs) > 0) {
+                if ( sizeof($ntfs) > 0 ) {
                     $tmp = array_replace($tmp, $ntfs);
                 }
             }
@@ -89,7 +93,8 @@ trait HasPermissionInheritance
         // get from cache or sql.
         $inherit = $this->getInherit($inherit_id);
 
-        if ($inherit->exists) {
+        if ( $inherit->exists ) {
+
             // ntfs determination
             $letNtfs($inherit->slug);
 
@@ -98,6 +103,7 @@ trait HasPermissionInheritance
 
             // follow along into deeper inherited permissions recursively
             while ($inherit && $inherit->inherit_id > 0 && ! is_null($inherit->inherit_id)) {
+
                 // get inherit permission from cache or sql.
                 $inherit = $this->getInherit($inherit->inherit_id);
 
@@ -109,7 +115,7 @@ trait HasPermissionInheritance
 
                 // avoid getting into infinite loop
                 $avoid[] = $inherit->id;
-                if (in_array($inherit->inherit_id, $avoid)) {
+                if ( in_array($inherit->inherit_id, $avoid) ) {
                     break;
                 }
             };
@@ -126,7 +132,7 @@ trait HasPermissionInheritance
      */
     protected function getInherit($inherit_id)
     {
-        if ($cache = $this->hasCache($inherit_id)) {
+        if ( $cache = $this->hasCache($inherit_id) ) {
             return $cache;
         }
 
@@ -142,7 +148,7 @@ trait HasPermissionInheritance
      */
     protected function hasCache($inherit_id)
     {
-        if (isset($this->cacheInherit[$inherit_id])) {
+        if ( isset($this->cacheInherit[$inherit_id]) ) {
             return $this->cacheInherit[$inherit_id];
         }
 
@@ -186,4 +192,5 @@ trait HasPermissionInheritance
 
         return (int) $permission;
     }*/
+
 }
