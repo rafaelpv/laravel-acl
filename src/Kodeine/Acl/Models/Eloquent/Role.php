@@ -28,7 +28,7 @@ class Role extends Model
      */
     public function users()
     {
-        return $this->belongsToMany(config('auth.model'))->withTimestamps();
+        return $this->belongsToMany(config('auth.providers.users.model', config('auth.model')))->withTimestamps();
     }
 
     /**
@@ -67,8 +67,9 @@ class Role extends Model
         $permissions = $this->toDotPermissions($permissions);
 
         // validate permissions array
-        if (is_array($permission)) {
-            if (! in_array($operator, ['and', 'or'])) {
+        if ( is_array($permission) ) {
+
+            if ( ! in_array($operator, ['and', 'or']) ) {
                 $e = 'Invalid operator, available operators are "and", "or".';
                 throw new \InvalidArgumentException($e);
             }
@@ -90,7 +91,7 @@ class Role extends Model
     protected function canWithAnd($permission, $permissions)
     {
         foreach ($permission as $check) {
-            if (! in_array($check, $permissions) || ! isset($permissions[$check]) || $permissions[$check] != true) {
+            if ( ! in_array($check, $permissions) || ! isset($permissions[$check]) || $permissions[$check] != true ) {
                 return false;
             }
         }
@@ -106,11 +107,12 @@ class Role extends Model
     protected function canWithOr($permission, $permissions)
     {
         foreach ($permission as $check) {
-            if (in_array($check, $permissions) && isset($permissions[$check]) && $permissions[$check] == true) {
+            if ( in_array($check, $permissions) && isset($permissions[$check]) && $permissions[$check] == true ) {
                 return true;
             }
         }
 
         return false;
     }
+
 }
