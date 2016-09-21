@@ -1,7 +1,6 @@
 <?php namespace Kodeine\Acl\Traits;
 
-
-trait HasRoleImplementation
+trait HasRole
 {
     use HasPermission;
 
@@ -39,7 +38,7 @@ trait HasRoleImplementation
             }
         );
 
-        $slugs = method_exists($this_roles, 'pluck') ? $this_roles->pluck('slug','id') : $this_roles->lists('slug','id');
+        $slugs = $this_roles->lists('slug');
         return is_null($this_roles)
             ? []
             : $this->collectionAsArray($slugs);
@@ -66,18 +65,16 @@ trait HasRoleImplementation
      * @param  string $slug
      * @return bool
      */
-    public function hasRole($slug, $operator = null)
+    public function is($slug, $operator = null)
     {
         $operator = is_null($operator) ? $this->parseOperator($slug) : $operator;
 
         $roles = $this->getRoles();
-        $roles = $roles instanceof \Illuminate\Contracts\Support\Arrayable ? $roles->toArray() : (array) $roles;
         $slug = $this->hasDelimiterToArray($slug);
 
         // array of slugs
-        if ( is_array($slug) ) {
-
-            if ( ! in_array($operator, ['and', 'or']) ) {
+        if (is_array($slug)) {
+            if (! in_array($operator, ['and', 'or'])) {
                 $e = 'Invalid operator, available operators are "and", "or".';
                 throw new \InvalidArgumentException($e);
             }
@@ -103,7 +100,7 @@ trait HasRoleImplementation
 
             $roleId = $this->parseRoleId($role);
 
-            if ( ! $this->roles->keyBy('id')->has($roleId) ) {
+            if (! $this->roles->keyBy('id')->has($roleId)) {
                 $this->roles()->attach($roleId);
 
                 return $role;
@@ -173,7 +170,7 @@ trait HasRoleImplementation
     protected function isWithAnd($slug, $roles)
     {
         foreach ($slug as $check) {
-            if ( ! in_array($check, $roles) ) {
+            if (! in_array($check, $roles)) {
                 return false;
             }
         }
@@ -189,7 +186,7 @@ trait HasRoleImplementation
     protected function isWithOr($slug, $roles)
     {
         foreach ($slug as $check) {
-            if ( in_array($check, $roles) ) {
+            if (in_array($check, $roles)) {
                 return true;
             }
         }
@@ -206,13 +203,12 @@ trait HasRoleImplementation
      */
     protected function parseRoleId($role)
     {
-        if ( is_string($role) || is_numeric($role) ) {
-
+        if (is_string($role) || is_numeric($role)) {
             $model = config('acl.role', 'Kodeine\Acl\Models\Eloquent\Role');
             $key = is_numeric($role) ? 'id' : 'slug';
             $alias = (new $model)->where($key, $role)->first();
 
-            if ( ! is_object($alias) || ! $alias->exists ) {
+            if (! is_object($alias) || ! $alias->exists) {
                 throw new \InvalidArgumentException('Specified role ' . $key . ' does not exists.');
             }
 
@@ -220,7 +216,7 @@ trait HasRoleImplementation
         }
 
         $model = '\Illuminate\Database\Eloquent\Model';
-        if ( is_object($role) && $role instanceof $model ) {
+        if (is_object($role) && $role instanceof $model) {
             $role = $role->getKey();
         }
 
@@ -244,14 +240,14 @@ trait HasRoleImplementation
     public function __call($method, $arguments)
     {
         // Handle isRoleSlug() methods
-        if ( starts_with($method, 'is') and $method !== 'is' and ! starts_with($method, 'isWith') ) {
+        if (starts_with($method, 'is') and $method !== 'is' and ! starts_with($method, 'isWith')) {
             $role = substr($method, 2);
 
-            return $this->hasRole($role);
+            return $this->is($role);
         }
 
         // Handle canDoSomething() methods
-        if ( starts_with($method, 'can') and $method !== 'can' and ! starts_with($method, 'canWith') ) {
+        if (starts_with($method, 'can') and $method !== 'can' and ! starts_with($method, 'canWith')) {
             $permission = substr($method, 3);
             $permission = snake_case($permission, '.');
 
@@ -259,20 +255,5 @@ trait HasRoleImplementation
         }
 
         return parent::__call($method, $arguments);
-    }
-}
-
-$laravel = app();
-if (version_compare($laravel::VERSION, '5.3', '<')) {
-    trait HasRole
-    {
-        use HasRoleImplementation {
-            hasRole as is;
-        }
-    }
-} else {
-    trait HasRole
-    {
-        use HasRoleImplementation;
     }
 }
